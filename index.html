@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interval Notification Tester</title>
+
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Interval Notifier" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="theme-color" content="#ffffff" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background: #f9f9f9;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 16px;
+    }
+
+    .status {
+      margin-top: 20px;
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "494e3018-0107-483e-b46c-cbe5e81bc464",
+        serviceWorkerPath: 'OneSignalSDKWorker.js',
+        serviceWorkerUpdaterPath: 'OneSignalSDKUpdaterWorker.js',
+      });
+
+      window.getOneSignalId = async function () {
+  const user = await OneSignal.User.get();
+  return user.id;
+};
+    });
+  </script>
+</head>
+<body>
+  <h1>Interval Notification Tester</h1>
+  <p>Enter interval time (in seconds):</p>
+  <input type="number" id="intervalInput" min="1" placeholder="e.g., 10" />
+  <button onclick="startNotifications()">Start Notifications</button>
+  <div class="status" id="status"></div>
+
+  <script>
+    async function startNotifications() {
+      const seconds = parseInt(document.getElementById('intervalInput').value);
+      const statusDiv = document.getElementById('status');
+
+      if (isNaN(seconds) || seconds <= 0) {
+        statusDiv.textContent = "Please enter a valid number greater than 0.";
+        return;
+      }
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        statusDiv.textContent = "Notification permission denied.";
+        return;
+      }
+
+      const playerId = await window.getOneSignalId();
+      if (!playerId) {
+        statusDiv.textContent = "Unable to retrieve OneSignal Player ID.";
+        return;
+      }
+
+      // Send to Make.com webhook
+      fetch('https://hook.eu2.make.com/t3b4yjgrhzuc51gqowfjmxr061qq5f7i', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    delay_seconds: seconds
+  })
+})
+.then(res => {
+  if (res.ok) {
+    statusDiv.textContent = `Delay sent: ${seconds} seconds.`;
+  } else {
+    statusDiv.textContent = "Failed to send delay to webhook.";
+  }
+})
+.catch(err => {
+  statusDiv.textContent = "Error sending delay: " + err.message;
+});
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(() => console.log('Service Worker Registered'))
+          .catch(err => console.error('SW registration failed:', err));
+      });
+    }
+  </script>
+</body>
+</html>
