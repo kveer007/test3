@@ -86,7 +86,7 @@
       }
 
       // Send to Make.com webhook
-      fetch('https://hook.eu2.make.com/t3b4yjgrhzuc51gqowfjmxr061qq5f7i', {
+      fetch('https://hook.eu2.make.com/vgqpec2mavg7m8gp8b8ftaabveiwac6n', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -103,6 +103,7 @@
 .catch(err => {
   statusDiv.textContent = "Error sending delay: " + err.message;
 });
+
 
     // Register Service Worker
     if ('serviceWorker' in navigator) {
